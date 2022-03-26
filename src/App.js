@@ -39,8 +39,10 @@ function App() {
   const payHandler = async () => {
     try {
       const result = await contract.topUp({value: 1000000000000000})
+      setButtonTxt('Sending...')
+      await result.wait()
       console.log(result)
-      setButtonTxt('Thanx! 0.001 BNB received')
+      setButtonTxt('Thanx! 0.001 BNB Sended 👌🏼')
     } catch (err) {
       console.log(err)
     }
@@ -50,7 +52,7 @@ function App() {
     return (<button onClick={connectWalletHandler} className='cta-button connect-wallet-button'>{walletTxt}</button>)
   }
 
-  const payButton = (payTxt) => {
+  const payButton = (payTxt, hash = null) => {
     return (<button onClick={payHandler} className='cta-button contract-button'>{payTxt}</button>)
   }
 
