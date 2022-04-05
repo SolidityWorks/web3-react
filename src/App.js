@@ -1,38 +1,53 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-import { ethers } from 'ethers';
+import {addChain, bsc, ethereum, getContract} from "./funcs";
 
-import contractInterface from './contracts/Hello.json';
-
-const contractAddress = "0xfF0aa1203619EAb79bf1D44CD11aAc1CBD80CdA0";
-const abi = contractInterface.abi;
 
 function App() {
 
-  const [account, setAccount] = useState('Connect Wallet');
-  const [buttonTxt, setButtonTxt] = useState('Donate 0.001 BNB');
-  const [contract, setContract] = useState(null);
-  const {ethereum} = window;
+  const [account, setAccount] = useState(ethereum.selectedAddress/*deprecated*/);
+  const [chainId, setChainId] = useState(ethereum.chainId);
+  const [buttonTxt, setButtonTxt] = useState();
+  const [contract, setContract] = useState();
 
-  const checkWalletIsConnected = () => {
-    if (!ethereum) {
+  ethereum.on('chainChanged', (_chainId) => setChainId(_chainId));
+  ethereum.on('accountsChanged', (accounts) => setAccount(accounts));
+
+  const connectWalletHandler = async (force = true) => {
+    if (ethereum) {
+      /** get acc from metamask */
+      const method = force ? 'eth_requestAccounts' : 'eth_accounts'
+      try {
+        const accounts = await ethereum.request({'method': method});
+        setAccount(accounts[0]);
+        console.log(accounts[0])
+        setContract(await getContract())
+        return Boolean(accounts)
+      } catch (e) {
+        console.log(e)
+      }
+    }
+    else {
       alert('You need install MetaMask')
     }
   }
 
-  const connectWalletHandler = async () => {
+  const setChain = async () => {
     try {
-      /** get acc from metamask */
-      const accounts = await ethereum.request({'method': 'eth_requestAccounts'});
-      setAccount(accounts[0]);
+      if (!await ethereum.request({method: 'wallet_switchEthereumChain', params: [{ chainId: bsc.chainId }]})) {
+        setChainId(ethereum.chainId)
+      }
+    } catch (switchError) {
+      if (switchError.code === 4902) { // This error code indicates that the chain has not been added to MetaMask.
+        await addChain()
+      }
+      console.log(switchError)
+    }
+  }
 
-      /** get contract from blockchain */
-      const provider = new ethers.providers.Web3Provider(ethereum);
-      const signer = provider.getSigner();
-      const ctr = new ethers.Contract(contractAddress, abi, signer);
-      setContract(ctr)
-    } catch (err) {
-      console.log(err)
+  const fresh = async () => {
+    if(await connectWalletHandler(false)) {
+      setChainId(ethereum.chainId)
     }
   }
 
@@ -41,29 +56,44 @@ function App() {
       const result = await contract.topUp({value: 1000000000000000})
       setButtonTxt('Sending...')
       await result.wait()
-      console.log(result)
-      setButtonTxt('Thanx! 0.001 BNB Sended 👌🏼')
+      setButtonTxt(result.hash)
     } catch (err) {
       console.log(err)
     }
   }
 
+  const chainBtn = () => {
+    const cls = 'cta-button '+(chainId === bsc.chainId ? 'success' : 'error')
+    return (<button onClick={chainId === bsc.chainId ? null : setChain} className={cls}>ChainId: {chainId || 'None'}</button>)
+  }
+
   const connectWalletButton = (walletTxt) => {
-    return (<button onClick={connectWalletHandler} className='cta-button connect-wallet-button'>{walletTxt}</button>)
+    return (<button onClick={account ? null : connectWalletHandler} className='cta-button connect-wallet-button'>
+      {walletTxt  || 'Connect Wallet'}
+    </button>)
   }
 
-  const payButton = (payTxt, hash = null) => {
-    return (<button onClick={payHandler} className='cta-button contract-button'>{payTxt}</button>)
+  const payButton = (payTxt) => {
+    if (payTxt && payTxt.startsWith('0x')) {
+      return (<button className='cta-button contract-button'>
+        Thanx! 0.001 BNB <a href={'https://testnet.bscscan.com/tx/'+payTxt}>Sended</a> 👌🏼
+      </button>)
+    }
+    return (<button onClick={payTxt ? null : payHandler} className='cta-button contract-button'>
+      {payTxt || 'Donate 0.001 BNB'}
+    </button>)
   }
 
-  useEffect(() => {
-    checkWalletIsConnected();
-  })
+  useEffect(async () => {
+    await fresh()
+  }, [account])
 
   return (
     <div className='main-app'>
       <h1>Web3 React Template</h1>
+      <h5>(on BSC testnet)</h5>
       <div>
+        {chainBtn()}
         {connectWalletButton(account)}
         {payButton(buttonTxt)}
       </div>
