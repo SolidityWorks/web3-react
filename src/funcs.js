@@ -13,6 +13,7 @@ export const bsc = {
   chainName: 'BNB Smart Chain Testnet',
   rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545/'],
   blockExplorerUrls: ['https://testnet.bscscan.com/'],
+  symbol: 'tBNB'
 }
 
 export const getContract = async () => {
