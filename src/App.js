@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import './App.css';
-import {addChain, bsc, ethereum, getContract} from "./funcs";
+import {addChain, bsc, chainCheck, ethereum, getContract} from "./funcs";
 
 
 function App() {
@@ -45,26 +45,24 @@ function App() {
     }
   }
 
-  const fresh = async () => {
-    if(await connectWalletHandler(false)) {
-      setChainId(ethereum.chainId)
-    }
-  }
-
   const payHandler = async () => {
-    try {
-      const result = await contract.topUp({value: 1000000000000000})
-      setButtonTxt('Sending...')
-      await result.wait()
-      setButtonTxt(result.hash)
-    } catch (err) {
-      console.log(err)
+    if (chainCheck()) {
+      try {
+        const result = await contract.topUp({value: 1000000000000000})
+        setButtonTxt('Sending...')
+        await result.wait()
+        setButtonTxt(result.hash)
+      } catch (err) {
+        console.log(err)
+      }
+    } else {
+      alert('Wrong chain')
     }
   }
 
   const chainBtn = () => {
-    const cls = 'cta-button '+(chainId === bsc.chainId ? 'success' : 'error')
-    return (<button onClick={chainId === bsc.chainId ? null : setChain} className={cls}>ChainId: {chainId || 'None'}</button>)
+    const cls = 'cta-button '+(chainCheck() ? 'success' : 'error')
+    return (<button onClick={chainCheck() ? null : setChain} className={cls}>ChainId: {chainId || 'None'}</button>)
   }
 
   const connectWalletButton = (walletTxt) => {
@@ -76,16 +74,22 @@ function App() {
   const payButton = (payTxt) => {
     if (payTxt && payTxt.startsWith('0x')) {
       return (<button className='cta-button contract-button'>
-        Thanx! 0.001 BNB <a href={'https://testnet.bscscan.com/tx/'+payTxt}>Sended</a> 👌🏼
+        Thanx! 0.001 BNB <a href={'https://testnet.bscscan.com/tx/'+payTxt} target='_blank' rel="noreferrer">Sended</a> 👌🏼
       </button>)
     }
-    return (<button onClick={payTxt ? null : payHandler} className='cta-button contract-button'>
+    const cls = 'cta-button ' + (chainCheck() ? 'contract-button' : 'inactive');
+    return (<button onClick={payTxt ? null : payHandler} className={cls}>
       {payTxt || 'Donate 0.001 BNB'}
     </button>)
   }
 
-  useEffect(async () => {
-    await fresh()
+  useEffect(() => {
+    async function fresh() {
+      if(await connectWalletHandler(false)) {
+        setChainId(ethereum.chainId)
+      }
+    }
+    fresh()
   }, [account])
 
   return (

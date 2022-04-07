@@ -19,7 +19,7 @@
 }
 
 .contract-button {
-  background: orange;
+  background: darkorange;
 }
 .contract-button a{
   color: white;
@@ -30,4 +30,7 @@
 }
 .success {
   background: darkgreen;
+}
+.inactive {
+  background: dimgrey;
 }
