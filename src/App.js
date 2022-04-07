@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import './App.css';
-import {addChain, bsc, chainCheck, ethereum, getContract} from "./funcs";
+import {chainAdd, bsc, chainCheck, ethereum, getContract} from "./funcs";
 
 
 function App() {
@@ -13,7 +13,7 @@ function App() {
   ethereum.on('chainChanged', (_chainId) => setChainId(_chainId));
   ethereum.on('accountsChanged', (accounts) => setAccount(accounts));
 
-  const connectWalletHandler = async (force = true) => {
+  const walletConnectHandler = async (force = true) => {
     if (ethereum) {
       /** get acc from metamask */
       const method = force ? 'eth_requestAccounts' : 'eth_accounts'
@@ -39,7 +39,7 @@ function App() {
       }
     } catch (switchError) {
       if (switchError.code === 4902) { // This error code indicates that the chain has not been added to MetaMask.
-        await addChain()
+        await chainAdd()
       }
       console.log(switchError)
     }
@@ -65,8 +65,8 @@ function App() {
     return (<button onClick={chainCheck() ? null : setChain} className={cls}>ChainId: {chainId || 'None'}</button>)
   }
 
-  const connectWalletButton = (walletTxt) => {
-    return (<button onClick={account ? null : connectWalletHandler} className='cta-button connect-wallet-button'>
+  const walletButtonConnect = (walletTxt) => {
+    return (<button onClick={account ? null : walletConnectHandler} className='cta-button connect-wallet-button'>
       {walletTxt  || 'Connect Wallet'}
     </button>)
   }
@@ -85,7 +85,7 @@ function App() {
 
   useEffect(() => {
     async function fresh() {
-      if(await connectWalletHandler(false)) {
+      if(await walletConnectHandler(false)) {
         setChainId(ethereum.chainId)
       }
     }
@@ -98,7 +98,7 @@ function App() {
       <h5>(on BSC testnet)</h5>
       <div>
         {chainBtn()}
-        {connectWalletButton(account)}
+        {walletButtonConnect(account)}
         {payButton(buttonTxt)}
       </div>
     </div>

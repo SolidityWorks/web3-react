@@ -29,7 +29,7 @@ export const getContract = async () => {
   }
 }
 
-export const addChain = async () => {
+export const chainAdd = async () => {
   try {
     await ethereum.request({method: 'wallet_addEthereumChain', params: [bsc]});
   } catch (addError) {
