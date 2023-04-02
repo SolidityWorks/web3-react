@@ -1,6 +1,6 @@
 # Minimal web3-react template
 
-#### Demo: https://mixartemev.github.io/web3-react/
+#### Demo: https://solidityworks.github.io/web3-react/
 Example [smartconract](https://testnet.bscscan.com/address/0xff0aa1203619eab79bf1d44cd11aac1cbd80cda0) deployed on Testnet Binance Smart Chain, so you should set your MetaMask on that network.
 
 ## Available Scripts
